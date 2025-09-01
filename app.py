@@ -98,49 +98,6 @@ CREATE TABLE IF NOT EXISTS morfometria_hoja (
   FOREIGN KEY (arbol_id) REFERENCES arbol(id)
 );
 """
-# --- Autenticación ---
-import streamlit as st
-import streamlit_authenticator as stauth
-
-# Construir las credenciales desde st.secrets (TOML)
-def _build_credentials_from_secrets():
-    creds = {"usernames": {}}
-    for uname, uinfo in st.secrets["credentials"]["usernames"].items():
-        creds["usernames"][uname] = {
-            "name": uinfo.get("name", uname),
-            "email": uinfo.get("email", ""),
-            "password": uinfo["password"],   # hash bcrypt
-            "role": uinfo.get("role", "viewer")
-        }
-    return creds
-
-credentials = _build_credentials_from_secrets()
-
-authenticator = stauth.Authenticate(
-    credentials,
-    st.secrets["auth"]["cookie_name"],
-    st.secrets["auth"]["signature_key"],
-    st.secrets["auth"]["cookie_expiry_days"],
-)
-
-# Render del formulario de login (en el cuerpo principal)
-name, auth_status, username = authenticator.login("Iniciar sesión", "main")
-
-if auth_status is False:
-    st.error("Usuario o contraseña inválidos.")
-    st.stop()
-elif auth_status is None:
-    st.info("Ingrese usuario y contraseña.")
-    st.stop()
-else:
-    # Logueado: mostrar barra lateral con logout y datos
-    authenticator.logout("Cerrar sesión", "sidebar")
-    st.sidebar.write(f"👤 {name}")
-    # (opcional) rol del usuario
-    USER_ROLE = credentials["usernames"][username].get("role", "viewer")
-    st.sidebar.caption(f"Rol: {USER_ROLE}")
-    # A partir de aquí, tu app existente (pestañas, formularios, etc.)
-
 # ---------------- Utilidades DB ----------------
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
